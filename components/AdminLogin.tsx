@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { login } from '../utils';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Info } from 'lucide-react';
 
 interface Props {
   onLoginSuccess: () => void;
@@ -16,7 +16,7 @@ const AdminLogin: React.FC<Props> = ({ onLoginSuccess }) => {
     if (login(username, password)) {
       onLoginSuccess();
     } else {
-      setError('Credenziali non valide. Riprova.');
+      setError('Credenziali non valide.');
     }
   };
 
@@ -71,6 +71,11 @@ const AdminLogin: React.FC<Props> = ({ onLoginSuccess }) => {
                 Accedi
             </button>
         </form>
+
+        <div className="mt-6 flex items-start space-x-2 text-xs text-gray-500 bg-dark-900 p-3 rounded border border-gray-800">
+            <Info className="w-4 h-4 shrink-0 text-brand-500" />
+            <p>Se è il primo accesso e non hai creato account, usa <strong>ID: 1</strong> e <strong>Pass: 1</strong> per configurare il sistema.</p>
+        </div>
       </div>
     </div>
   );

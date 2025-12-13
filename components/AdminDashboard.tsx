@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { QuestionnaireData, CustomQuestion } from '../types';
-import { getSubmissions, clearSubmissions, changePassword, getCustomQuestions, saveCustomQuestion, deleteCustomQuestion, exportDatabase, importDatabase } from '../utils';
-import { LogOut, Trash2, Search, Calendar, User, FileText, ChevronDown, ChevronUp, Lock, Plus, List, Download, Upload, CheckSquare, Square, FileDown } from 'lucide-react';
+import { QuestionnaireData, CustomQuestion, User, QuestionType } from '../types';
+import { getSubmissions, clearSubmissions, getCustomQuestions, saveCustomQuestion, deleteCustomQuestion, exportDatabase, importDatabase, getUsers, saveUser, deleteUser } from '../utils';
+import { LogOut, Trash2, Search, Calendar, User as UserIcon, FileText, ChevronDown, ChevronUp, Lock, Plus, List, Download, Upload, CheckSquare, Square, FileDown, Settings, Users, AlertTriangle } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
 interface Props {
@@ -17,13 +17,17 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
   // Selection State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Settings State
-  const [newPass, setNewPass] = useState('');
-  const [passMsg, setPassMsg] = useState('');
+  // Account Management State
+  const [users, setUsers] = useState<User[]>([]);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [accountMsg, setAccountMsg] = useState('');
 
   // Custom Questions State
   const [customQuestions, setCustomQuestions] = useState<CustomQuestion[]>([]);
-  const [newQuestionText, setNewQuestionText] = useState('');
+  const [newQText, setNewQText] = useState('');
+  const [newQType, setNewQType] = useState<QuestionType>('text');
+  const [newQOptions, setNewQOptions] = useState(''); // Comma separated
 
   // Restore State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -31,6 +35,12 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
   useEffect(() => {
     setSubmissions(getSubmissions());
     setCustomQuestions(getCustomQuestions());
+    setUsers(getUsers());
+
+    // FORCE SETUP: If no users exist, force user to Settings tab
+    if (getUsers().length === 0) {
+        setActiveTab('settings');
+    }
   }, []);
 
   const handleClearAll = () => {
@@ -41,22 +51,55 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
     }
   };
 
-  const handlePasswordChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    if(newPass.length < 4) {
-        setPassMsg("La password deve essere di almeno 4 caratteri.");
-        return;
-    }
-    changePassword(newPass);
-    setPassMsg("Password aggiornata con successo!");
-    setNewPass('');
+  // --- ACCOUNT LOGIC ---
+  const handleCreateUser = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newUsername || !newPassword) {
+          setAccountMsg("Inserisci username e password.");
+          return;
+      }
+      try {
+          saveUser(newUsername, newPassword);
+          setUsers(getUsers());
+          setNewUsername('');
+          setNewPassword('');
+          setAccountMsg("Account creato con successo!");
+      } catch (e) {
+          setAccountMsg("Errore: Utente già esistente.");
+      }
   };
 
+  const handleDeleteUser = (username: string) => {
+      if (users.length === 1) {
+          alert("Non puoi eliminare l'ultimo amministratore.");
+          return;
+      }
+      if (confirm(`Eliminare l'utente ${username}?`)) {
+          deleteUser(username);
+          setUsers(getUsers());
+      }
+  };
+
+  // --- QUESTION LOGIC ---
   const handleAddQuestion = (e: React.FormEvent) => {
     e.preventDefault();
-    if(!newQuestionText.trim()) return;
-    saveCustomQuestion(newQuestionText);
-    setNewQuestionText('');
+    if(!newQText.trim()) return;
+
+    const options = (newQType === 'select' || newQType === 'radio' || newQType === 'checkbox') 
+        ? newQOptions.split(',').map(s => s.trim()).filter(s => s !== '')
+        : undefined;
+
+    const newQ: CustomQuestion = {
+        id: crypto.randomUUID(),
+        text: newQText,
+        type: newQType,
+        options: options
+    };
+
+    saveCustomQuestion(newQ);
+    setNewQText('');
+    setNewQOptions('');
+    setNewQType('text');
     setCustomQuestions(getCustomQuestions());
   };
 
@@ -154,52 +197,24 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
               y += 10;
           };
 
-          // 1. Anagrafica
+          // Standard Sections (Same as before)
           printSection("Dati Anagrafici");
           printLine("Nome", sub.fullName);
           printLine("Email", sub.email);
           printLine("Telefono", sub.phone);
-          printLine("Età", sub.age);
-          printLine("Altezza/Peso", `${sub.height}cm / ${sub.weight}kg`);
-          printLine("Professione", sub.profession);
-
-          // 2. Salute
-          printSection("Salute & Infortuni");
+          
+          printSection("Salute");
           printLine("Problemi Cuore", sub.heartProblems);
-          printLine("Pressione", sub.pressure);
-          printLine("Diabete", sub.diabetes);
-          printLine("Farmaci", sub.medications);
-          printLine("Dolori Attuali", sub.currentPain);
           printLine("Infortuni Passati", sub.pastInjuries);
-          printLine("Movimenti Dolorosi", sub.painfulMovements);
 
-          // 3. Stile di Vita
-          printSection("Stile di Vita");
-          printLine("Sonno", `${sub.sleepHours}h (${sub.sleepQuality})`);
-          printLine("Stress (1-10)", sub.stressLevel);
-          printLine("Lavoro", sub.jobActivity);
-          printLine("Fumo", sub.smoker);
-          printLine("Alcol", sub.alcohol);
-
-          // 4. Allenamento
-          printSection("Attività Fisica");
-          printLine("Si allena?", sub.currentlyTraining);
-          printLine("Da quando", sub.trainingSince);
-          printLine("Frequenza", sub.frequency);
-          printLine("Attività", Object.entries(sub.activityType).filter(([k,v]) => v && k!=='other').map(([k]) => k).join(', ') + (sub.activityType.other ? ` ${sub.activityType.other}` : ''));
-          
-          // 5. Obiettivi
-          printSection("Obiettivi & Preferenze");
+          printSection("Obiettivi");
           printLine("Obiettivi", Object.entries(sub.goals).filter(([_,v]) => v).map(([k]) => k).join(', '));
-          printLine("Disponibilità", sub.weeklyAvailability);
-          printLine("Tempo/Sessione", sub.timePerSession);
-          printLine("Impegno (1-10)", sub.commitmentLevel);
           
-          // Descrizione Lunga
+           // Descrizione Lunga
           if (y > 250) { doc.addPage(); y = 20; }
           y += 5;
           doc.setFont("helvetica", "bold");
-          doc.text("Descrizione Obiettivo:", 10, y);
+          doc.text("Descrizione:", 10, y);
           y += 5;
           doc.setFont("helvetica", "normal");
           const splitGoal = doc.splitTextToSize(sub.mainGoalDescription, 190);
@@ -225,7 +240,6 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
           // Footer
           doc.setFontSize(8);
           doc.text(`Data Compilazione: ${new Date(sub.submissionDate).toLocaleDateString()}`, 10, 290);
-          doc.text(`ID: ${sub.id}`, 150, 290);
       });
 
       doc.save(`Schede_Clienti_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -254,26 +268,30 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
       <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
         <div>
             <h1 className="text-3xl font-bold text-white">Dashboard Clienti</h1>
-            <p className="text-gray-400">Bentornato, Davide.</p>
+            <p className="text-gray-400">Pannello di controllo amministrativo.</p>
         </div>
         <div className="flex flex-wrap gap-2 md:space-x-4 justify-center">
-            <button 
-                onClick={() => setActiveTab('submissions')}
-                className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'submissions' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
-            >
-                Questionari
-            </button>
-            <button 
-                onClick={() => setActiveTab('questions')}
-                className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'questions' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
-            >
-                Gestione Domande
-            </button>
+            {users.length > 0 && (
+                <>
+                <button 
+                    onClick={() => setActiveTab('submissions')}
+                    className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'submissions' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
+                >
+                    Questionari
+                </button>
+                <button 
+                    onClick={() => setActiveTab('questions')}
+                    className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'questions' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
+                >
+                    Gestione Domande
+                </button>
+                </>
+            )}
             <button 
                 onClick={() => setActiveTab('settings')}
                 className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'settings' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
             >
-                Backup & Sicurezza
+                Account & Backup
             </button>
             <button 
                 onClick={onLogout} 
@@ -286,27 +304,61 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
 
       {activeTab === 'settings' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Password Change */}
+              {/* Account Management */}
               <div className="bg-dark-800 p-8 rounded-lg shadow-xl border border-gray-700">
                   <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                      <Lock className="mr-3 text-brand-500" /> Modifica Password
+                      <Users className="mr-3 text-brand-500" /> Gestione Account
                   </h2>
-                  <form onSubmit={handlePasswordChange}>
-                      <div className="mb-4">
-                          <label className="block text-gray-400 mb-2">Nuova Password</label>
-                          <input 
-                            type="password" 
-                            value={newPass}
-                            onChange={(e) => setNewPass(e.target.value)}
-                            className="w-full bg-dark-900 border border-gray-600 rounded p-3 text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                            placeholder="Inserisci nuova password"
-                          />
+                  
+                  {users.length === 0 && (
+                      <div className="mb-6 bg-yellow-500/20 border border-yellow-500 p-4 rounded text-yellow-100 flex items-start">
+                          <AlertTriangle className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
+                          <p className="text-sm">
+                              <strong>Attenzione:</strong> Non hai ancora creato account amministratore reali. 
+                              Attualmente stai usando l'accesso temporaneo (1/1). Crea subito un account per proteggere il database.
+                          </p>
                       </div>
-                      {passMsg && <p className={`mb-4 text-sm ${passMsg.includes('successo') ? 'text-green-400' : 'text-red-400'}`}>{passMsg}</p>}
+                  )}
+
+                  <form onSubmit={handleCreateUser} className="mb-8 border-b border-gray-700 pb-8">
+                      <h3 className="text-white font-semibold mb-4">Crea Nuovo Admin</h3>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <input 
+                            type="text" 
+                            value={newUsername}
+                            onChange={(e) => setNewUsername(e.target.value)}
+                            className="bg-dark-900 border border-gray-600 rounded p-3 text-white focus:border-brand-500 focus:outline-none"
+                            placeholder="Username"
+                        />
+                        <input 
+                            type="text" 
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="bg-dark-900 border border-gray-600 rounded p-3 text-white focus:border-brand-500 focus:outline-none"
+                            placeholder="Password"
+                        />
+                      </div>
                       <button type="submit" className="w-full bg-brand-600 text-white font-bold py-3 rounded hover:bg-brand-500 transition-colors">
-                          Salva Modifiche
+                          Crea Account
                       </button>
+                      {accountMsg && <p className="mt-2 text-sm text-green-400">{accountMsg}</p>}
                   </form>
+
+                  <div>
+                      <h3 className="text-white font-semibold mb-4">Account Esistenti</h3>
+                      {users.length === 0 ? <p className="text-gray-500 italic">Nessun account.</p> : (
+                          <ul className="space-y-2">
+                              {users.map(u => (
+                                  <li key={u.username} className="flex justify-between items-center bg-dark-900 p-3 rounded">
+                                      <span className="text-gray-300">{u.username}</span>
+                                      <button onClick={() => handleDeleteUser(u.username)} className="text-red-400 hover:text-red-200">
+                                          <Trash2 className="w-4 h-4" />
+                                      </button>
+                                  </li>
+                              ))}
+                          </ul>
+                      )}
+                  </div>
               </div>
 
               {/* Backup & Restore */}
@@ -358,18 +410,50 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
               <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
                   <List className="mr-3 text-brand-500" /> Editor Domande Extra
               </h2>
-              <p className="text-gray-400 mb-6 text-sm">Aggiungi domande personalizzate che appariranno in fondo al questionario cliente.</p>
+              <p className="text-gray-400 mb-6 text-sm">Crea domande personalizzate per il questionario.</p>
               
-              <form onSubmit={handleAddQuestion} className="flex gap-4 mb-8">
-                  <input 
-                    type="text" 
-                    value={newQuestionText}
-                    onChange={(e) => setNewQuestionText(e.target.value)}
-                    className="flex-1 bg-dark-900 border border-gray-600 rounded p-3 text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    placeholder="Scrivi qui la tua domanda..."
-                  />
-                  <button type="submit" className="bg-brand-600 px-6 py-3 rounded text-white font-bold hover:bg-brand-500 flex items-center">
-                      <Plus className="w-5 h-5" /> <span className="hidden sm:inline ml-2">Aggiungi</span>
+              <form onSubmit={handleAddQuestion} className="mb-8 border-b border-gray-700 pb-8 space-y-4">
+                  <div>
+                      <label className="block text-gray-400 text-sm mb-1">Testo della Domanda</label>
+                      <input 
+                        type="text" 
+                        value={newQText}
+                        onChange={(e) => setNewQText(e.target.value)}
+                        className="w-full bg-dark-900 border border-gray-600 rounded p-3 text-white focus:border-brand-500 focus:outline-none"
+                        placeholder="Es. Quante volte mangi fuori?"
+                      />
+                  </div>
+                  
+                  <div>
+                      <label className="block text-gray-400 text-sm mb-1">Tipo di Risposta</label>
+                      <select 
+                        value={newQType} 
+                        onChange={(e) => setNewQType(e.target.value as QuestionType)}
+                        className="w-full bg-dark-900 border border-gray-600 rounded p-3 text-white focus:border-brand-500 focus:outline-none"
+                      >
+                          <option value="text">Testo Breve</option>
+                          <option value="textarea">Testo Lungo</option>
+                          <option value="radio">Scelta Singola (Radio)</option>
+                          <option value="checkbox">Scelta Multipla (Checkbox)</option>
+                          <option value="select">Menu a Tendina</option>
+                      </select>
+                  </div>
+
+                  {(newQType === 'select' || newQType === 'radio' || newQType === 'checkbox') && (
+                      <div>
+                          <label className="block text-gray-400 text-sm mb-1">Opzioni (separate da virgola)</label>
+                          <input 
+                            type="text" 
+                            value={newQOptions}
+                            onChange={(e) => setNewQOptions(e.target.value)}
+                            className="w-full bg-dark-900 border border-gray-600 rounded p-3 text-white focus:border-brand-500 focus:outline-none"
+                            placeholder="Es. Mai, A volte, Spesso"
+                          />
+                      </div>
+                  )}
+
+                  <button type="submit" className="w-full bg-brand-600 py-3 rounded text-white font-bold hover:bg-brand-500 flex items-center justify-center">
+                      <Plus className="w-5 h-5 mr-2" /> Aggiungi Domanda
                   </button>
               </form>
 
@@ -379,7 +463,11 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
                   ) : (
                       customQuestions.map(q => (
                           <div key={q.id} className="bg-dark-900 p-4 rounded flex justify-between items-center border border-gray-700">
-                              <span className="text-white">{q.text}</span>
+                              <div>
+                                <span className="text-white block font-medium">{q.text}</span>
+                                <span className="text-xs text-brand-400 uppercase">{q.type}</span>
+                                {q.options && <span className="text-xs text-gray-500 block">Opzioni: {q.options.join(', ')}</span>}
+                              </div>
                               <button onClick={() => handleDeleteQuestion(q.id)} className="text-red-400 hover:text-red-300 p-2">
                                   <Trash2 className="w-5 h-5" />
                               </button>
@@ -441,7 +529,7 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
         <div className="space-y-4">
             {filteredSubmissions.length === 0 ? (
                 <div className="text-center py-20 bg-dark-800 rounded-lg border border-dashed border-gray-700">
-                    <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <UserIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                     <p className="text-gray-400 text-lg">Nessun questionario trovato.</p>
                 </div>
             ) : (

@@ -1,6 +1,16 @@
+export type QuestionType = 'text' | 'textarea' | 'select' | 'radio' | 'checkbox';
+
 export interface CustomQuestion {
   id: string;
   text: string;
+  type: QuestionType;
+  options?: string[]; // Used for select, radio, checkbox
+}
+
+export interface User {
+  username: string;
+  pass: string; // In a real app, hash this!
+  role: 'admin';
 }
 
 export interface QuestionnaireData {
@@ -96,7 +106,7 @@ export interface QuestionnaireData {
   trainingPreference: 'Intensi' | 'Graduali' | 'Vari' | 'Tecnici';
   trainerStylePreference: 'Motivazione' | 'Controllo tecnico' | 'Educazione';
 
-  // Extra: Domande Personalizzate (ID domanda -> Risposta)
+  // Extra: Domande Personalizzate (ID domanda -> Risposta (stringa o JSON string per array))
   customAnswers: Record<string, string>;
 
   // 11. Consenso & Foto

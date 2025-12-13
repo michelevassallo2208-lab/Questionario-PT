@@ -29,6 +29,7 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
     }
   };
 
+  // Helper for Custom Questions
   const handleCustomAnswerChange = (qId: string, value: string) => {
     setFormData(prev => ({
         ...prev,
@@ -38,6 +39,25 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
         }
     }));
   };
+
+  const handleCustomCheckboxChange = (qId: string, option: string, checked: boolean) => {
+      setFormData(prev => {
+          const currentVal = prev.customAnswers[qId] ? prev.customAnswers[qId].split(', ') : [];
+          let newVal;
+          if (checked) {
+              newVal = [...currentVal, option];
+          } else {
+              newVal = currentVal.filter(v => v !== option);
+          }
+          return {
+              ...prev,
+              customAnswers: {
+                  ...prev.customAnswers,
+                  [qId]: newVal.join(', ')
+              }
+          }
+      });
+  }
 
   const handleNestedChange = (section: keyof QuestionnaireData, key: string, value: any) => {
     setFormData(prev => ({
@@ -112,6 +132,77 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
       {label} {required && <span className="text-brand-400">*</span>}
     </label>
   );
+
+  const renderCustomInput = (q: CustomQuestion) => {
+      const val = formData.customAnswers[q.id] || '';
+
+      switch (q.type) {
+          case 'textarea':
+              return (
+                  <textarea 
+                      value={val} 
+                      onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} 
+                      className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-24"
+                  />
+              );
+          case 'select':
+              return (
+                  <select 
+                      value={val} 
+                      onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} 
+                      className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  >
+                      <option value="">Seleziona...</option>
+                      {q.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
+              );
+          case 'radio':
+              return (
+                  <div className="flex flex-col space-y-2 mt-2">
+                      {q.options?.map(opt => (
+                          <label key={opt} className="flex items-center space-x-2 text-gray-300">
+                              <input 
+                                  type="radio" 
+                                  name={`custom-${q.id}`} 
+                                  value={opt} 
+                                  checked={val === opt} 
+                                  onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)}
+                                  className="accent-brand-500" 
+                              />
+                              <span>{opt}</span>
+                          </label>
+                      ))}
+                  </div>
+              );
+            case 'checkbox':
+                const currentVals = val ? val.split(', ') : [];
+                return (
+                    <div className="flex flex-col space-y-2 mt-2">
+                        {q.options?.map(opt => (
+                            <label key={opt} className="flex items-center space-x-2 text-gray-300">
+                                <input 
+                                    type="checkbox" 
+                                    checked={currentVals.includes(opt)}
+                                    onChange={(e) => handleCustomCheckboxChange(q.id, opt, e.target.checked)}
+                                    className="accent-brand-500" 
+                                />
+                                <span>{opt}</span>
+                            </label>
+                        ))}
+                    </div>
+                );
+          case 'text':
+          default:
+              return (
+                  <input 
+                      type="text"
+                      value={val} 
+                      onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} 
+                      className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  />
+              );
+      }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-dark-800 p-6 md:p-10 rounded-xl shadow-2xl border border-gray-700 relative overflow-hidden">
@@ -379,11 +470,7 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
                     {customQuestions.map((q) => (
                         <div key={q.id}>
                             <InputLabel label={q.text} />
-                            <textarea 
-                                value={formData.customAnswers[q.id] || ''} 
-                                onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} 
-                                className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-20"
-                            />
+                            {renderCustomInput(q)}
                         </div>
                     ))}
                 </div>
