@@ -72,7 +72,10 @@ const AdminLogin: React.FC<Props> = ({ onLoginSuccess }) => {
             </button>
         </form>
 
-       
+        <div className="mt-6 flex items-start space-x-2 text-xs text-gray-500 bg-dark-900 p-3 rounded border border-gray-800">
+            <Info className="w-4 h-4 shrink-0 text-brand-500" />
+            <p>Se è il primo accesso e non hai creato account, usa <strong>ID: 1</strong> e <strong>Pass: 1</strong> per configurare il sistema.</p>
+        </div>
       </div>
     </div>
   );
