@@ -7,10 +7,10 @@ export interface CustomQuestion {
   options?: string[]; // Used for select, radio, checkbox
 }
 
-export interface User {
-  username: string;
-  pass: string; // In a real app, hash this!
-  role: 'admin';
+export interface PinData {
+  code: string;
+  label: string;
+  mustChange: boolean;
 }
 
 export interface QuestionnaireData {
