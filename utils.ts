@@ -56,10 +56,14 @@ export const deleteUser = (username: string) => {
 
 export const login = (u: string, p: string): boolean => {
     const users = getUsers();
+    
+    // Normalize inputs (trim spaces) to help mobile users
+    const cleanUser = u.trim();
+    const cleanPass = p.trim();
 
-    // BOOTSTRAP MODE: If no users exist, allow 1/1
+    // BOOTSTRAP MODE: If no users exist, allow davide/davide
     if (users.length === 0) {
-        if (u === '1' && p === '1') {
+        if (cleanUser === 'davide' && cleanPass === 'davide') {
             localStorage.setItem(AUTH_KEY, 'true');
             return true;
         }
@@ -67,7 +71,7 @@ export const login = (u: string, p: string): boolean => {
     }
 
     // NORMAL MODE
-    const match = users.find(user => user.username === u && user.pass === p);
+    const match = users.find(user => user.username === cleanUser && user.pass === cleanPass);
     if (match) {
         localStorage.setItem(AUTH_KEY, 'true');
         return true;

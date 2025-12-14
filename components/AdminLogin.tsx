@@ -48,6 +48,9 @@ const AdminLogin: React.FC<Props> = ({ onLoginSuccess }) => {
                         onChange={(e) => setUsername(e.target.value)}
                         className="w-full bg-dark-900 text-white pl-10 pr-4 py-3 rounded border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         placeholder="Es. davide"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        autoComplete="off"
                     />
                 </div>
             </div>
@@ -61,6 +64,8 @@ const AdminLogin: React.FC<Props> = ({ onLoginSuccess }) => {
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full bg-dark-900 text-white pl-10 pr-4 py-3 rounded border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                         placeholder="••••••••"
+                        autoCapitalize="none"
+                        autoCorrect="off"
                     />
                 </div>
             </div>
@@ -74,7 +79,7 @@ const AdminLogin: React.FC<Props> = ({ onLoginSuccess }) => {
 
         <div className="mt-6 flex items-start space-x-2 text-xs text-gray-500 bg-dark-900 p-3 rounded border border-gray-800">
             <Info className="w-4 h-4 shrink-0 text-brand-500" />
-            <p>Se è il primo accesso e non hai creato account, usa <strong>ID: 1</strong> e <strong>Pass: 1</strong> per configurare il sistema.</p>
+            <p>Se è il primo accesso, usa <strong>ID: davide</strong> e <strong>Pass: davide</strong>.</p>
         </div>
       </div>
     </div>
