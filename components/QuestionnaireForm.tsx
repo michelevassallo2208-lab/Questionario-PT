@@ -110,7 +110,11 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setCustomQuestions(getCustomQuestions());
+    const loadQuestions = async () => {
+      const questions = await getCustomQuestions();
+      setCustomQuestions(questions);
+    };
+    loadQuestions();
   }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
