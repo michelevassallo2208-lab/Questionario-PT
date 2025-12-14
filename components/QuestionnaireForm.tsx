@@ -1,11 +1,107 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { QuestionnaireData, initialQuestionnaire, CustomQuestion } from '../types';
-import { Camera, Check, Upload, AlertCircle } from 'lucide-react';
+import { Camera, Check, Upload, AlertCircle, ChevronRight } from 'lucide-react';
 import { getCustomQuestions } from '../utils';
 
 interface Props {
   onSubmit: (data: QuestionnaireData) => void;
 }
+
+// --- STYLED COMPONENTS ---
+
+const SectionTitle = ({ num, title }: { num: string, title: string }) => (
+  <div className="mt-12 mb-8 relative">
+      <div className="absolute left-0 top-1/2 w-full h-px bg-white/10 -z-10"></div>
+      <h3 className="text-xl md:text-2xl font-bold text-white inline-flex items-center bg-dark-900/40 pr-4 backdrop-blur-sm rounded-r-full">
+          <span className="bg-gradient-to-br from-brand-500 to-brand-700 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold mr-4 shadow-[0_0_15px_rgba(59,130,246,0.5)] shrink-0 border border-white/10">
+              {num}
+          </span>
+          {title}
+      </h3>
+  </div>
+);
+
+const InputLabel = ({ label, required }: { label: string, required?: boolean }) => (
+  <label className="block text-gray-300 text-sm font-semibold mb-3 tracking-wide">
+    {label} {required && <span className="text-brand-400">*</span>}
+  </label>
+);
+
+const StyledInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <input 
+      {...props} 
+      className="w-full bg-black/40 text-white rounded-lg px-4 py-4 border border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all placeholder-gray-600 text-base shadow-inner" 
+  />
+);
+
+const StyledSelect = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => (
+  <div className="relative">
+      <select 
+          {...props} 
+          className="w-full bg-black/40 text-white rounded-lg px-4 py-4 border border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all appearance-none text-base shadow-inner"
+      >
+          {props.children}
+      </select>
+      <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+          <ChevronRight className="w-5 h-5 rotate-90" />
+      </div>
+  </div>
+);
+
+const StyledTextarea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea
+      {...props}
+      className="w-full bg-black/40 text-white rounded-lg px-4 py-4 border border-white/10 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-all placeholder-gray-600 text-base shadow-inner min-h-[100px]"
+    />
+);
+
+interface StyledCheckboxProps {
+    checked: boolean;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    label: string;
+    name?: string;
+}
+
+const StyledCheckbox: React.FC<StyledCheckboxProps> = ({ checked, onChange, label, name }) => (
+    <label className={`flex items-start p-4 rounded-lg border transition-all cursor-pointer group ${checked ? 'bg-brand-900/20 border-brand-500/50' : 'bg-white/5 border-white/5 hover:border-white/20'}`}>
+        <div className="relative flex items-center justify-center shrink-0 mt-0.5">
+            <input 
+              type="checkbox" 
+              name={name} 
+              checked={checked} 
+              onChange={onChange} 
+              className="peer appearance-none w-6 h-6 border-2 border-gray-500 rounded bg-transparent checked:bg-brand-500 checked:border-brand-500 transition-colors"
+            />
+            <Check className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
+        </div>
+        <span className={`ml-3 text-base ${checked ? 'text-white font-medium' : 'text-gray-300 group-hover:text-white'}`}>{label}</span>
+    </label>
+);
+
+interface StyledRadioProps {
+    checked: boolean;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    label: string;
+    name: string;
+    value: string;
+}
+
+const StyledRadio: React.FC<StyledRadioProps> = ({ checked, onChange, label, name, value }) => (
+  <label className={`flex items-center p-4 rounded-lg border transition-all cursor-pointer group ${checked ? 'bg-brand-900/20 border-brand-500/50' : 'bg-white/5 border-white/5 hover:border-white/20'}`}>
+      <div className="relative flex items-center justify-center shrink-0">
+          <input 
+            type="radio" 
+            name={name} 
+            value={value}
+            checked={checked} 
+            onChange={onChange} 
+            className="peer appearance-none w-6 h-6 border-2 border-gray-500 rounded-full bg-transparent checked:border-brand-500 transition-colors"
+          />
+          <div className="absolute w-3 h-3 bg-brand-500 rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+      </div>
+      <span className={`ml-3 text-base ${checked ? 'text-white font-medium' : 'text-gray-300 group-hover:text-white'}`}>{label}</span>
+  </label>
+);
 
 const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
   const [formData, setFormData] = useState<QuestionnaireData>(initialQuestionnaire);
@@ -14,7 +110,6 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Load custom defined questions
     setCustomQuestions(getCustomQuestions());
   }, []);
 
@@ -29,7 +124,6 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
     }
   };
 
-  // Helper for Custom Questions
   const handleCustomAnswerChange = (qId: string, value: string) => {
     setFormData(prev => ({
         ...prev,
@@ -118,110 +212,69 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
     }
   };
 
-  const SectionTitle = ({ num, title }: { num: string, title: string }) => (
-    <h3 className="text-xl md:text-2xl font-bold text-brand-400 mt-10 mb-6 border-b border-gray-700 pb-2 flex items-center">
-      <span className="bg-brand-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3 shrink-0 shadow-lg shadow-brand-500/20">
-        {num}
-      </span>
-      {title}
-    </h3>
-  );
-
-  const InputLabel = ({ label, required }: { label: string, required?: boolean }) => (
-    <label className="block text-gray-300 text-sm font-semibold mb-2">
-      {label} {required && <span className="text-brand-400">*</span>}
-    </label>
-  );
-
   const renderCustomInput = (q: CustomQuestion) => {
       const val = formData.customAnswers[q.id] || '';
 
       switch (q.type) {
           case 'textarea':
-              return (
-                  <textarea 
-                      value={val} 
-                      onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} 
-                      className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-24"
-                  />
-              );
+              return <StyledTextarea value={val} onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} />;
           case 'select':
               return (
-                  <select 
-                      value={val} 
-                      onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} 
-                      className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  >
+                  <StyledSelect value={val} onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)}>
                       <option value="">Seleziona...</option>
                       {q.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                  </select>
+                  </StyledSelect>
               );
           case 'radio':
               return (
-                  <div className="flex flex-col space-y-2 mt-2">
+                  <div className="space-y-3 mt-3">
                       {q.options?.map(opt => (
-                          <label key={opt} className="flex items-center space-x-2 text-gray-300">
-                              <input 
-                                  type="radio" 
-                                  name={`custom-${q.id}`} 
-                                  value={opt} 
-                                  checked={val === opt} 
-                                  onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)}
-                                  className="accent-brand-500" 
-                              />
-                              <span>{opt}</span>
-                          </label>
+                          <StyledRadio 
+                             key={opt}
+                             label={opt}
+                             name={`custom-${q.id}`}
+                             value={opt}
+                             checked={val === opt}
+                             onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)}
+                          />
                       ))}
                   </div>
               );
             case 'checkbox':
                 const currentVals = val ? val.split(', ') : [];
                 return (
-                    <div className="flex flex-col space-y-2 mt-2">
+                    <div className="space-y-3 mt-3">
                         {q.options?.map(opt => (
-                            <label key={opt} className="flex items-center space-x-2 text-gray-300">
-                                <input 
-                                    type="checkbox" 
-                                    checked={currentVals.includes(opt)}
-                                    onChange={(e) => handleCustomCheckboxChange(q.id, opt, e.target.checked)}
-                                    className="accent-brand-500" 
-                                />
-                                <span>{opt}</span>
-                            </label>
+                            <StyledCheckbox 
+                                key={opt}
+                                label={opt}
+                                checked={currentVals.includes(opt)}
+                                onChange={(e) => handleCustomCheckboxChange(q.id, opt, e.target.checked)}
+                            />
                         ))}
                     </div>
                 );
           case 'text':
           default:
-              return (
-                  <input 
-                      type="text"
-                      value={val} 
-                      onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} 
-                      className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                  />
-              );
+              return <StyledInput value={val} onChange={(e) => handleCustomAnswerChange(q.id, e.target.value)} />;
       }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-dark-800 p-6 md:p-10 rounded-xl shadow-2xl border border-gray-700 relative overflow-hidden">
+    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto bg-dark-900/60 backdrop-blur-xl p-6 md:p-10 rounded-2xl shadow-2xl border border-white/5 relative">
       
-      {/* Decorative top border */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-600 via-brand-400 to-brand-600"></div>
+      {/* Decorative top gradient */}
+      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-600 via-brand-400 to-brand-600 rounded-t-2xl"></div>
 
-      <div className="text-center mb-10">
-        <div className="flex justify-center mb-6">
-            <img src="logo.png" alt="Davide Carfora PT" className="h-20 md:h-24 object-contain" onError={(e) => {e.currentTarget.style.display = 'none'}} />
-        </div>
-        <h2 className="text-3xl font-bold text-white mb-2">Questionario Iniziale</h2>
-        <p className="text-gray-400">Compila questo modulo per permettermi di creare il tuo piano perfetto.</p>
+      <div className="text-center mb-10 mt-2">
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">Questionario Iniziale</h2>
+        <p className="text-gray-400 text-lg">Compila questo modulo per permettermi di creare il tuo piano perfetto.</p>
       </div>
 
       {errors.length > 0 && (
-        <div className="bg-red-900/30 border border-red-500 text-red-200 p-4 rounded mb-6 flex items-start">
-          <AlertCircle className="w-5 h-5 mr-2 mt-0.5" />
-          <ul>
+        <div className="bg-red-500/10 border border-red-500/50 text-red-200 p-4 rounded-xl mb-8 flex items-start animate-pulse">
+          <AlertCircle className="w-6 h-6 mr-3 mt-0.5 shrink-0" />
+          <ul className="list-disc list-inside">
             {errors.map((err, idx) => <li key={idx}>{err}</li>)}
           </ul>
         </div>
@@ -230,245 +283,221 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
       {/* 1. Dati Anagrafici */}
       <SectionTitle num="1" title="Dati Anagrafici" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div><InputLabel label="Nome e Cognome" required /><input name="fullName" value={formData.fullName} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <div><InputLabel label="Data di nascita" /><input type="date" name="dob" value={formData.dob} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+        <div className="md:col-span-2"><InputLabel label="Nome e Cognome" required /><StyledInput name="fullName" value={formData.fullName} onChange={handleChange} placeholder="Es. Mario Rossi" /></div>
+        <div><InputLabel label="Data di nascita" /><StyledInput type="date" name="dob" value={formData.dob} onChange={handleChange} /></div>
         <div className="grid grid-cols-2 gap-4">
-            <div><InputLabel label="Età" /><input name="age" type="number" value={formData.age} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-            <div><InputLabel label="Sesso" /><select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"><option value="">Seleziona</option><option value="M">M</option><option value="F">F</option></select></div>
+            <div><InputLabel label="Età" /><StyledInput name="age" type="number" value={formData.age} onChange={handleChange} /></div>
+            <div><InputLabel label="Sesso" />
+                <StyledSelect name="gender" value={formData.gender} onChange={handleChange}>
+                    <option value="">...</option><option value="M">M</option><option value="F">F</option>
+                </StyledSelect>
+            </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-            <div><InputLabel label="Altezza (cm)" /><input name="height" value={formData.height} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-            <div><InputLabel label="Peso (kg)" /><input name="weight" value={formData.weight} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+            <div><InputLabel label="Altezza (cm)" /><StyledInput name="height" value={formData.height} onChange={handleChange} /></div>
+            <div><InputLabel label="Peso (kg)" /><StyledInput name="weight" value={formData.weight} onChange={handleChange} /></div>
         </div>
-        <div><InputLabel label="Email" required /><input name="email" type="email" value={formData.email} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <div><InputLabel label="Telefono" required /><input name="phone" type="tel" value={formData.phone} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <div className="md:col-span-2"><InputLabel label="Professione" /><input name="profession" value={formData.profession} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+        <div className="md:col-span-2"><InputLabel label="Email" required /><StyledInput name="email" type="email" value={formData.email} onChange={handleChange} placeholder="nome@esempio.com" /></div>
+        <div className="md:col-span-2"><InputLabel label="Telefono" required /><StyledInput name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="+39 ..." /></div>
+        <div className="md:col-span-2"><InputLabel label="Professione" /><StyledInput name="profession" value={formData.profession} onChange={handleChange} /></div>
       </div>
 
       {/* 2. Stato di Salute */}
-      <SectionTitle num="2" title="Stato di Salute Generale" />
-      <div className="space-y-4">
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="heartProblems" checked={formData.heartProblems} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Il medico ti ha mai diagnosticato problemi cardiaci?</span>
-        </label>
+      <SectionTitle num="2" title="Stato di Salute" />
+      <div className="space-y-6">
+        <StyledCheckbox name="heartProblems" label="Il medico ti ha mai diagnosticato problemi cardiaci?" checked={formData.heartProblems} onChange={handleChange} />
+        
         <div>
-            <InputLabel label="Soffri di pressione alta o bassa?" />
-            <select name="pressure" value={formData.pressure} onChange={handleChange} className="w-full md:w-1/3 bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <InputLabel label="Pressione sanguigna" />
+            <StyledSelect name="pressure" value={formData.pressure} onChange={handleChange}>
                 <option value="Normale">Normale</option>
                 <option value="Alta">Alta</option>
                 <option value="Bassa">Bassa</option>
-            </select>
+            </StyledSelect>
         </div>
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="cardioDiseases" checked={formData.cardioDiseases} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Hai mai avuto infarti, ictus o patologie cardiovascolari?</span>
-        </label>
-        <div>
+        
+        <StyledCheckbox name="cardioDiseases" label="Hai mai avuto infarti, ictus o patologie cardiovascolari?" checked={formData.cardioDiseases} onChange={handleChange} />
+        
+        <div className="bg-white/5 p-5 rounded-xl border border-white/5">
             <InputLabel label="Soffri di diabete?" />
-            <div className="flex space-x-4">
+            <div className="flex flex-col sm:flex-row gap-4 mt-2">
                 {['No', 'Tipo 1', 'Tipo 2'].map(opt => (
-                    <label key={opt} className="flex items-center space-x-2 text-gray-300">
-                        <input type="radio" name="diabetes" value={opt} checked={formData.diabetes === opt} onChange={handleChange} className="accent-brand-500" />
-                        <span>{opt}</span>
-                    </label>
+                     <StyledRadio key={opt} name="diabetes" value={opt} label={opt} checked={formData.diabetes === opt} onChange={handleChange} />
                 ))}
             </div>
         </div>
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="respiratoryProblems" checked={formData.respiratoryProblems} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Hai problemi respiratori (asma, bronchite, ecc.)?</span>
-        </label>
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="thyroidProblems" checked={formData.thyroidProblems} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Hai problemi alla tiroide?</span>
-        </label>
+
+        <StyledCheckbox name="respiratoryProblems" label="Hai problemi respiratori (asma, ecc.)?" checked={formData.respiratoryProblems} onChange={handleChange} />
+        <StyledCheckbox name="thyroidProblems" label="Hai problemi alla tiroide?" checked={formData.thyroidProblems} onChange={handleChange} />
+        
         <div>
-            <InputLabel label="Assumi farmaci regolarmente? Se sì, quali?" />
-            <textarea name="medications" value={formData.medications} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-20" placeholder="Elenca farmaci..." />
+            <InputLabel label="Assumi farmaci regolarmente?" />
+            <StyledTextarea name="medications" value={formData.medications} onChange={handleChange} placeholder="Se sì, quali?" />
         </div>
         <div>
-            <InputLabel label="Hai allergie rilevanti?" />
-            <input name="allergies" value={formData.allergies} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" />
+            <InputLabel label="Allergie rilevanti?" />
+            <StyledInput name="allergies" value={formData.allergies} onChange={handleChange} />
         </div>
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="surgeries" checked={formData.surgeries} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Hai subito interventi chirurgici negli ultimi 2 anni?</span>
-        </label>
+        <StyledCheckbox name="surgeries" label="Interventi chirurgici negli ultimi 2 anni?" checked={formData.surgeries} onChange={handleChange} />
       </div>
 
-      {/* 3. Apparato Muscolo-Scheletrico */}
-      <SectionTitle num="3" title="Apparato Muscolo-Scheletrico" />
-      <div className="space-y-4">
-        <label className="flex items-center space-x-3 text-gray-300 font-semibold">
-            <input type="checkbox" name="currentPain" checked={formData.currentPain} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Avverti dolori muscolari o articolari attualmente?</span>
-        </label>
+      {/* 3. Muscolo-Scheletrico */}
+      <SectionTitle num="3" title="Muscolo-Scheletrico" />
+      <div className="space-y-6">
+        <StyledCheckbox name="currentPain" label="Avverti dolori muscolari/articolari attualmente?" checked={formData.currentPain} onChange={handleChange} />
         
-        <div className="bg-dark-900 p-4 rounded border border-gray-700">
+        <div className="bg-white/5 p-6 rounded-xl border border-white/5">
             <InputLabel label="Hai o hai avuto problemi a:" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" name="spineIssues" checked={formData.spineIssues} onChange={handleChange} className="accent-brand-500" /> <span>Colonna vertebrale</span></label>
-                <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" name="shoulderIssues" checked={formData.shoulderIssues} onChange={handleChange} className="accent-brand-500" /> <span>Spalle</span></label>
-                <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" name="kneeIssues" checked={formData.kneeIssues} onChange={handleChange} className="accent-brand-500" /> <span>Ginocchia</span></label>
-                <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" name="hipIssues" checked={formData.hipIssues} onChange={handleChange} className="accent-brand-500" /> <span>Anche</span></label>
-                <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" name="ankleIssues" checked={formData.ankleIssues} onChange={handleChange} className="accent-brand-500" /> <span>Caviglie / Piedi</span></label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                <StyledCheckbox name="spineIssues" label="Colonna vertebrale" checked={formData.spineIssues} onChange={handleChange} />
+                <StyledCheckbox name="shoulderIssues" label="Spalle" checked={formData.shoulderIssues} onChange={handleChange} />
+                <StyledCheckbox name="kneeIssues" label="Ginocchia" checked={formData.kneeIssues} onChange={handleChange} />
+                <StyledCheckbox name="hipIssues" label="Anche" checked={formData.hipIssues} onChange={handleChange} />
+                <StyledCheckbox name="ankleIssues" label="Caviglie / Piedi" checked={formData.ankleIssues} onChange={handleChange} />
             </div>
         </div>
         
-        <div><InputLabel label="Hai mai subito infortuni sportivi? (Quali e quando)" /><textarea name="pastInjuries" value={formData.pastInjuries} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-20" /></div>
-        <div><InputLabel label="Ci sono movimenti o esercizi che ti provocano dolore?" /><textarea name="painfulMovements" value={formData.painfulMovements} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-20" /></div>
+        <div><InputLabel label="Infortuni sportivi passati?" /><StyledTextarea name="pastInjuries" value={formData.pastInjuries} onChange={handleChange} placeholder="Quali e quando..." /></div>
+        <div><InputLabel label="Movimenti che provocano dolore?" /><StyledTextarea name="painfulMovements" value={formData.painfulMovements} onChange={handleChange} /></div>
       </div>
 
-      {/* 4. Livello di Attività Fisica */}
-      <SectionTitle num="4" title="Livello di Attività Fisica" />
-      <div className="space-y-4">
-         <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="currentlyTraining" checked={formData.currentlyTraining} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Ti alleni attualmente?</span>
-        </label>
-        {formData.currentlyTraining && (
-            <div><InputLabel label="Da quanto tempo?" /><input name="trainingSince" value={formData.trainingSince} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        )}
-        <div><InputLabel label="Quante volte a settimana ti alleni?" /><input name="frequency" value={formData.frequency} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+      {/* 4. Attività Fisica */}
+      <SectionTitle num="4" title="Attività Fisica" />
+      <div className="space-y-6">
+         <StyledCheckbox name="currentlyTraining" label="Ti alleni attualmente?" checked={formData.currentlyTraining} onChange={handleChange} />
         
-        <div className="bg-dark-900 p-4 rounded border border-gray-700">
-             <InputLabel label="Che tipo di attività svolgi?" />
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                 <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" checked={formData.activityType.weights} onChange={(e) => handleNestedChange('activityType', 'weights', e.target.checked)} className="accent-brand-500" /> <span>Pesi</span></label>
-                 <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" checked={formData.activityType.cardio} onChange={(e) => handleNestedChange('activityType', 'cardio', e.target.checked)} className="accent-brand-500" /> <span>Cardio</span></label>
-                 <label className="flex items-center space-x-2 text-gray-400"><input type="checkbox" checked={formData.activityType.sports} onChange={(e) => handleNestedChange('activityType', 'sports', e.target.checked)} className="accent-brand-500" /> <span>Sport Specifici</span></label>
+        {formData.currentlyTraining && (
+            <div className="animate-fade-in"><InputLabel label="Da quanto tempo?" /><StyledInput name="trainingSince" value={formData.trainingSince} onChange={handleChange} /></div>
+        )}
+        
+        <div><InputLabel label="Quante volte a settimana?" /><StyledInput name="frequency" value={formData.frequency} onChange={handleChange} /></div>
+        
+        <div className="bg-white/5 p-6 rounded-xl border border-white/5">
+             <InputLabel label="Tipo di attività attuale" />
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                 <StyledCheckbox label="Pesi" checked={formData.activityType.weights} onChange={(e) => handleNestedChange('activityType', 'weights', e.target.checked)} />
+                 <StyledCheckbox label="Cardio" checked={formData.activityType.cardio} onChange={(e) => handleNestedChange('activityType', 'cardio', e.target.checked)} />
+                 <StyledCheckbox label="Sport Specifici" checked={formData.activityType.sports} onChange={(e) => handleNestedChange('activityType', 'sports', e.target.checked)} />
              </div>
-             <div className="mt-2"><InputLabel label="Altro" /><input value={formData.activityType.other} onChange={(e) => handleNestedChange('activityType', 'other', e.target.value)} className="w-full bg-dark-900 text-white rounded p-2 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+             <div className="mt-4"><InputLabel label="Altro" /><StyledInput value={formData.activityType.other} onChange={(e) => handleNestedChange('activityType', 'other', e.target.value)} /></div>
         </div>
-        <div><InputLabel label="Da quanto tempo pratichi attività fisica in modo continuativo?" /><input name="continuousActivityDuration" value={formData.continuousActivityDuration} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+        
+        <div><InputLabel label="Da quanto pratichi attività continuativa?" /><StyledInput name="continuousActivityDuration" value={formData.continuousActivityDuration} onChange={handleChange} /></div>
       </div>
 
-      {/* 5. Esperienze Pregresse */}
-      <SectionTitle num="5" title="Esperienze Pregresse" />
-      <div className="space-y-4">
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="hashadTrainer" checked={formData.hashadTrainer} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Hai già seguito programmi con un PT?</span>
-        </label>
-        <div><InputLabel label="Cosa ti è piaciuto o non piaciuto?" /><textarea name="experienceFeedback" value={formData.experienceFeedback} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-20" /></div>
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="interruptedTraining" checked={formData.interruptedTraining} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Hai mai interrotto un percorso?</span>
-        </label>
+      {/* 5. Esperienze */}
+      <SectionTitle num="5" title="Esperienze" />
+      <div className="space-y-6">
+        <StyledCheckbox name="hashadTrainer" label="Hai già avuto un Personal Trainer?" checked={formData.hashadTrainer} onChange={handleChange} />
+        <div><InputLabel label="Feedback esperienze precedenti" /><StyledTextarea name="experienceFeedback" value={formData.experienceFeedback} onChange={handleChange} placeholder="Cosa ti è piaciuto o non ti è piaciuto?" /></div>
+        
+        <StyledCheckbox name="interruptedTraining" label="Hai mai interrotto un percorso?" checked={formData.interruptedTraining} onChange={handleChange} />
         {formData.interruptedTraining && (
-            <div><InputLabel label="Motivo dell'interruzione" /><input name="interruptionReason" value={formData.interruptionReason} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+            <div className="animate-fade-in"><InputLabel label="Motivo dell'interruzione" /><StyledInput name="interruptionReason" value={formData.interruptionReason} onChange={handleChange} /></div>
         )}
       </div>
 
       {/* 6. Stile di Vita */}
       <SectionTitle num="6" title="Stile di Vita" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div><InputLabel label="Ore di sonno per notte" /><input name="sleepHours" value={formData.sleepHours} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+        <div><InputLabel label="Ore di sonno" /><StyledInput name="sleepHours" value={formData.sleepHours} onChange={handleChange} /></div>
         <div>
             <InputLabel label="Qualità del sonno" />
-            <select name="sleepQuality" value={formData.sleepQuality} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <StyledSelect name="sleepQuality" value={formData.sleepQuality} onChange={handleChange}>
                 <option value="Scarsa">Scarsa</option>
                 <option value="Media">Media</option>
                 <option value="Buona">Buona</option>
-            </select>
+            </StyledSelect>
         </div>
-        <div><InputLabel label="Livello Stress (1-10)" /><input type="number" min="1" max="10" name="stressLevel" value={formData.stressLevel} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+        <div><InputLabel label="Stress (1-10)" /><StyledInput type="number" min="1" max="10" name="stressLevel" value={formData.stressLevel} onChange={handleChange} /></div>
         <div>
             <InputLabel label="Tipo di lavoro" />
-            <select name="jobActivity" value={formData.jobActivity} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <StyledSelect name="jobActivity" value={formData.jobActivity} onChange={handleChange}>
                 <option value="Sedentario">Sedentario</option>
                 <option value="Attivo">Attivo</option>
                 <option value="Molto fisico">Molto fisico</option>
-            </select>
+            </StyledSelect>
         </div>
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="smoker" checked={formData.smoker} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Fumi?</span>
-        </label>
-         <div>
-            <InputLabel label="Consumi Alcol?" />
-            <select name="alcohol" value={formData.alcohol} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+        <div className="md:col-span-2">
+            <StyledCheckbox name="smoker" label="Fumi?" checked={formData.smoker} onChange={handleChange} />
+        </div>
+         <div className="md:col-span-2">
+            <InputLabel label="Consumo Alcol" />
+            <StyledSelect name="alcohol" value={formData.alcohol} onChange={handleChange}>
                 <option value="No">No</option>
                 <option value="Occasionalmente">Occasionalmente</option>
                 <option value="Regolarmente">Regolarmente</option>
-            </select>
+            </StyledSelect>
         </div>
       </div>
 
       {/* 7. Alimentazione */}
       <SectionTitle num="7" title="Alimentazione" />
-      <div className="space-y-4">
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="followsDiet" checked={formData.followsDiet} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Segui un piano alimentare strutturato?</span>
-        </label>
-        <div><InputLabel label="Restrizioni o intolleranze" /><input name="foodIntolerances" value={formData.foodIntolerances} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <div><InputLabel label="Quanti pasti fai al giorno?" /><input name="mealsPerDay" value={formData.mealsPerDay} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <label className="flex items-center space-x-3 text-gray-300">
-            <input type="checkbox" name="drinksWater" checked={formData.drinksWater} onChange={handleChange} className="w-5 h-5 accent-brand-500" />
-            <span>Bevi almeno 1.5-2L di acqua al giorno?</span>
-        </label>
+      <div className="space-y-6">
+        <StyledCheckbox name="followsDiet" label="Segui già una dieta?" checked={formData.followsDiet} onChange={handleChange} />
+        <div><InputLabel label="Intolleranze / Restrizioni" /><StyledInput name="foodIntolerances" value={formData.foodIntolerances} onChange={handleChange} /></div>
+        <div><InputLabel label="Pasti al giorno" /><StyledInput name="mealsPerDay" value={formData.mealsPerDay} onChange={handleChange} /></div>
+        <StyledCheckbox name="drinksWater" label="Bevi almeno 1.5L di acqua?" checked={formData.drinksWater} onChange={handleChange} />
         <div>
-            <InputLabel label="Come valuti la tua alimentazione?" />
-            <select name="dietQuality" value={formData.dietQuality} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <InputLabel label="Qualità alimentazione percepita" />
+            <StyledSelect name="dietQuality" value={formData.dietQuality} onChange={handleChange}>
                 <option value="Scarsa">Scarsa</option>
                 <option value="Discreta">Discreta</option>
                 <option value="Buona">Buona</option>
-            </select>
+            </StyledSelect>
         </div>
       </div>
 
       {/* 8. Obiettivi */}
       <SectionTitle num="8" title="Obiettivi" />
-      <div className="space-y-4">
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.weightLoss} onChange={(e) => handleNestedChange('goals', 'weightLoss', e.target.checked)} className="accent-brand-500" /> <span>Dimagrimento</span></label>
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.muscleGain} onChange={(e) => handleNestedChange('goals', 'muscleGain', e.target.checked)} className="accent-brand-500" /> <span>Aumento Massa</span></label>
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.toning} onChange={(e) => handleNestedChange('goals', 'toning', e.target.checked)} className="accent-brand-500" /> <span>Tonificazione</span></label>
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.strength} onChange={(e) => handleNestedChange('goals', 'strength', e.target.checked)} className="accent-brand-500" /> <span>Forza</span></label>
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.endurance} onChange={(e) => handleNestedChange('goals', 'endurance', e.target.checked)} className="accent-brand-500" /> <span>Resistenza</span></label>
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.wellness} onChange={(e) => handleNestedChange('goals', 'wellness', e.target.checked)} className="accent-brand-500" /> <span>Benessere</span></label>
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.rehab} onChange={(e) => handleNestedChange('goals', 'rehab', e.target.checked)} className="accent-brand-500" /> <span>Post-Infortunio</span></label>
-            <label className="flex items-center space-x-2 text-gray-300"><input type="checkbox" checked={formData.goals.sportPerformance} onChange={(e) => handleNestedChange('goals', 'sportPerformance', e.target.checked)} className="accent-brand-500" /> <span>Prestazione Sportiva</span></label>
+      <div className="space-y-6">
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <StyledCheckbox label="Dimagrimento" checked={formData.goals.weightLoss} onChange={(e) => handleNestedChange('goals', 'weightLoss', e.target.checked)} />
+            <StyledCheckbox label="Aumento Massa" checked={formData.goals.muscleGain} onChange={(e) => handleNestedChange('goals', 'muscleGain', e.target.checked)} />
+            <StyledCheckbox label="Tonificazione" checked={formData.goals.toning} onChange={(e) => handleNestedChange('goals', 'toning', e.target.checked)} />
+            <StyledCheckbox label="Forza" checked={formData.goals.strength} onChange={(e) => handleNestedChange('goals', 'strength', e.target.checked)} />
+            <StyledCheckbox label="Resistenza" checked={formData.goals.endurance} onChange={(e) => handleNestedChange('goals', 'endurance', e.target.checked)} />
+            <StyledCheckbox label="Benessere" checked={formData.goals.wellness} onChange={(e) => handleNestedChange('goals', 'wellness', e.target.checked)} />
+            <StyledCheckbox label="Post-Infortunio" checked={formData.goals.rehab} onChange={(e) => handleNestedChange('goals', 'rehab', e.target.checked)} />
+            <StyledCheckbox label="Prestazione Sportiva" checked={formData.goals.sportPerformance} onChange={(e) => handleNestedChange('goals', 'sportPerformance', e.target.checked)} />
          </div>
-         <div><InputLabel label="Descrivi il tuo obiettivo principale con parole tue:" /><textarea name="mainGoalDescription" value={formData.mainGoalDescription} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-24" /></div>
+         <div><InputLabel label="Descrivi il tuo obiettivo principale" /><StyledTextarea name="mainGoalDescription" value={formData.mainGoalDescription} onChange={handleChange} className="h-32" /></div>
       </div>
 
       {/* 9. Disponibilità */}
-      <SectionTitle num="9" title="Disponibilità e Impegno" />
+      <SectionTitle num="9" title="Disponibilità" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div><InputLabel label="Quante volte a settimana puoi allenarti?" /><input name="weeklyAvailability" value={formData.weeklyAvailability} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <div><InputLabel label="Tempo per allenamento?" /><input name="timePerSession" value={formData.timePerSession} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <div><InputLabel label="Data evento obiettivo (se presente)" /><input name="deadlineEvent" value={formData.deadlineEvent} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
-        <div><InputLabel label="Quanto sei disposto a impegnarti (1-10)?" /><input type="number" min="1" max="10" name="commitmentLevel" value={formData.commitmentLevel} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500" /></div>
+        <div><InputLabel label="Giorni a settimana" /><StyledInput name="weeklyAvailability" value={formData.weeklyAvailability} onChange={handleChange} /></div>
+        <div><InputLabel label="Minuti per sessione" /><StyledInput name="timePerSession" value={formData.timePerSession} onChange={handleChange} /></div>
+        <div className="md:col-span-2"><InputLabel label="Eventuale scadenza (evento/data)" /><StyledInput name="deadlineEvent" value={formData.deadlineEvent} onChange={handleChange} /></div>
+        <div className="md:col-span-2"><InputLabel label="Impegno (1-10)" /><StyledInput type="number" min="1" max="10" name="commitmentLevel" value={formData.commitmentLevel} onChange={handleChange} /></div>
       </div>
 
       {/* 10. Aspettative */}
-      <SectionTitle num="10" title="Aspettative dal Trainer" />
-      <div className="space-y-4">
-        <div><InputLabel label="Cosa ti aspetti da me?" /><textarea name="expectations" value={formData.expectations} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 h-24" /></div>
+      <SectionTitle num="10" title="Aspettative" />
+      <div className="space-y-6">
+        <div><InputLabel label="Cosa ti aspetti dal percorso?" /><StyledTextarea name="expectations" value={formData.expectations} onChange={handleChange} /></div>
         <div>
-            <InputLabel label="Preferisci allenamenti:" />
-            <select name="trainingPreference" value={formData.trainingPreference} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <InputLabel label="Preferenza allenamenti" />
+            <StyledSelect name="trainingPreference" value={formData.trainingPreference} onChange={handleChange}>
                 {['Intensi', 'Graduali', 'Vari', 'Tecnici'].map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            </StyledSelect>
         </div>
          <div>
-            <InputLabel label="Preferisci maggiormente:" />
-            <select name="trainerStylePreference" value={formData.trainerStylePreference} onChange={handleChange} className="w-full bg-dark-900 text-white rounded p-3 border border-gray-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            <InputLabel label="Stile del Trainer preferito" />
+            <StyledSelect name="trainerStylePreference" value={formData.trainerStylePreference} onChange={handleChange}>
                 {['Motivazione', 'Controllo tecnico', 'Educazione'].map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            </StyledSelect>
         </div>
       </div>
 
         {/* Custom Questions Section (Dynamic) */}
         {customQuestions.length > 0 && (
             <>
-                <SectionTitle num="Extra" title="Domande Aggiuntive" />
-                <div className="space-y-6">
+                <SectionTitle num="+" title="Domande Extra" />
+                <div className="space-y-8">
                     {customQuestions.map((q) => (
-                        <div key={q.id}>
+                        <div key={q.id} className="animate-fade-in">
                             <InputLabel label={q.text} />
                             {renderCustomInput(q)}
                         </div>
@@ -478,40 +507,51 @@ const QuestionnaireForm: React.FC<Props> = ({ onSubmit }) => {
         )}
 
        {/* Foto */}
-       <SectionTitle num="Foto" title="Foto della Condizione Attuale" />
-       <div className="bg-dark-900 p-6 rounded border border-gray-700 text-center">
-            <p className="text-gray-400 mb-4 text-sm">Carica le tue foto (Fronte, Retro, Lato) per una valutazione completa. (Max 5 foto)</p>
-            <div className="flex flex-wrap gap-4 justify-center mb-4">
+       <SectionTitle num="Img" title="Foto Condizione" />
+       <div className="bg-black/30 backdrop-blur-md p-8 rounded-2xl border border-dashed border-gray-600 text-center hover:border-brand-500 transition-colors">
+            <Camera className="w-10 h-10 mx-auto text-brand-500 mb-4" />
+            <p className="text-gray-300 mb-2 font-medium">Carica le tue foto (Fronte, Retro, Lato)</p>
+            <p className="text-gray-500 text-sm mb-6">Massimo 5 foto. Formati: JPG, PNG.</p>
+            
+            <div className="flex flex-wrap gap-4 justify-center mb-6">
                 {formData.photos.map((photo, idx) => (
-                    <img key={idx} src={photo} alt="preview" className="w-24 h-32 object-cover rounded border border-brand-500" />
+                    <div key={idx} className="relative group">
+                        <img src={photo} alt="preview" className="w-24 h-32 object-cover rounded-lg border border-white/20 shadow-lg" />
+                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Check className="text-brand-400 w-6 h-6" />
+                        </div>
+                    </div>
                 ))}
             </div>
-            <label className="cursor-pointer inline-flex items-center space-x-2 bg-dark-800 hover:bg-dark-700 text-white px-4 py-2 rounded border border-gray-500 transition-colors">
+            
+            <label className="cursor-pointer inline-flex items-center space-x-2 bg-brand-600 hover:bg-brand-500 text-white px-8 py-3 rounded-full font-bold transition-transform transform hover:scale-105 shadow-lg shadow-brand-500/20">
                 <Upload className="w-5 h-5" />
-                <span>Carica Foto</span>
+                <span>Seleziona Foto</span>
                 <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             </label>
        </div>
 
 
       {/* 11. Consenso */}
-      <SectionTitle num="11" title="Consenso Informato" />
-      <div className="border border-brand-500/30 bg-brand-500/5 p-6 rounded">
-        <label className="flex items-start space-x-3 cursor-pointer">
-             <input type="checkbox" name="consent" checked={formData.consent} onChange={handleChange} className="w-6 h-6 mt-1 accent-brand-500 shrink-0" />
-             <span className="text-gray-300 text-sm">
-                Dichiaro che le informazioni fornite sono veritiere e autorizzo il trattamento dei dati personali ai fini della programmazione dell’attività di personal training presso lo studio <strong>Davide Carfora PT</strong>.
+      <div className="mt-12 bg-brand-900/10 border border-brand-500/20 p-6 rounded-2xl">
+        <label className="flex items-start space-x-4 cursor-pointer">
+             <div className="relative flex items-center justify-center shrink-0 mt-1">
+                 <input type="checkbox" name="consent" checked={formData.consent} onChange={handleChange} className="peer appearance-none w-6 h-6 border-2 border-brand-500 rounded bg-transparent checked:bg-brand-500 transition-colors" />
+                 <Check className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
+             </div>
+             <span className="text-gray-300 text-sm leading-relaxed">
+                Dichiaro che le informazioni fornite sono veritiere e autorizzo il trattamento dei dati personali ai fini della programmazione dell’attività di personal training da <strong>Davide Carfora</strong>.
              </span>
         </label>
       </div>
 
-      <div className="mt-10 flex justify-end">
+      <div className="mt-10 mb-4 flex justify-end">
         <button 
             type="submit" 
             disabled={isSubmitting}
-            className="bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 px-10 rounded-lg text-lg flex items-center shadow-lg shadow-brand-500/30 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full md:w-auto bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold py-5 px-12 rounded-full text-lg flex justify-center items-center shadow-[0_0_30px_rgba(37,99,235,0.4)] transform hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-            {isSubmitting ? 'Invio in corso...' : 'Invia Questionario'}
+            {isSubmitting ? 'Invio in corso...' : 'INVIA QUESTIONARIO'}
             {!isSubmitting && <Check className="ml-2 w-6 h-6" />}
         </button>
       </div>

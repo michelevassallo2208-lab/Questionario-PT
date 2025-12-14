@@ -265,37 +265,37 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-10 gap-6">
         <div>
             <h1 className="text-3xl font-bold text-white">Dashboard Clienti</h1>
             <p className="text-gray-400">Pannello di controllo amministrativo.</p>
         </div>
-        <div className="flex flex-wrap gap-2 md:space-x-4 justify-center">
+        <div className="flex flex-wrap gap-2 w-full xl:w-auto">
             {users.length > 0 && (
                 <>
                 <button 
                     onClick={() => setActiveTab('submissions')}
-                    className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'submissions' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
+                    className={`flex-1 xl:flex-none px-4 py-3 rounded-lg font-medium transition-colors text-center ${activeTab === 'submissions' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-gray-300 bg-dark-800 hover:bg-dark-700'}`}
                 >
                     Questionari
                 </button>
                 <button 
                     onClick={() => setActiveTab('questions')}
-                    className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'questions' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
+                    className={`flex-1 xl:flex-none px-4 py-3 rounded-lg font-medium transition-colors text-center ${activeTab === 'questions' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-gray-300 bg-dark-800 hover:bg-dark-700'}`}
                 >
-                    Gestione Domande
+                    Domande
                 </button>
                 </>
             )}
             <button 
                 onClick={() => setActiveTab('settings')}
-                className={`px-4 py-2 rounded font-medium transition-colors ${activeTab === 'settings' ? 'bg-brand-600 text-white shadow-brand-500/20 shadow-lg' : 'text-gray-300 hover:bg-dark-800'}`}
+                className={`flex-1 xl:flex-none px-4 py-3 rounded-lg font-medium transition-colors text-center ${activeTab === 'settings' ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/20' : 'text-gray-300 bg-dark-800 hover:bg-dark-700'}`}
             >
-                Account & Backup
+                Settings
             </button>
             <button 
                 onClick={onLogout} 
-                className="flex items-center px-4 py-2 bg-red-600/20 border border-red-600 text-red-100 hover:bg-red-600 hover:text-white rounded transition-colors"
+                className="flex-1 xl:flex-none flex items-center justify-center px-4 py-3 bg-red-900/20 border border-red-900/50 text-red-200 hover:bg-red-900 hover:text-white rounded-lg transition-colors"
             >
                 <LogOut className="w-4 h-4 mr-2" /> Logout
             </button>
@@ -311,18 +311,17 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
                   </h2>
                   
                   {users.length === 0 && (
-                      <div className="mb-6 bg-yellow-500/20 border border-yellow-500 p-4 rounded text-yellow-100 flex items-start">
+                      <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 p-4 rounded text-yellow-100 flex items-start">
                           <AlertTriangle className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
                           <p className="text-sm">
-                              <strong>Attenzione:</strong> Non hai ancora creato account amministratore reali. 
-                              Attualmente stai usando l'accesso temporaneo (1/1). Crea subito un account per proteggere il database.
+                              <strong>Attenzione:</strong> Accesso temporaneo (1/1). Crea subito un account per proteggere il database.
                           </p>
                       </div>
                   )}
 
                   <form onSubmit={handleCreateUser} className="mb-8 border-b border-gray-700 pb-8">
                       <h3 className="text-white font-semibold mb-4">Crea Nuovo Admin</h3>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <input 
                             type="text" 
                             value={newUsername}
@@ -367,7 +366,7 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
                       <Download className="mr-3 text-brand-500" /> Backup Database
                   </h2>
                   <p className="text-gray-400 mb-6 text-sm">
-                      Scarica periodicamente un backup dei dati per sicurezza. Puoi ricaricare questo file in caso di perdita dei dati o cambio dispositivo.
+                      Scarica periodicamente un backup dei dati per sicurezza.
                   </p>
                   
                   <div className="space-y-4">
@@ -495,11 +494,11 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
             </div>
             
             {/* Actions */}
-            <div className="flex items-center space-x-3 w-full md:w-auto justify-end">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
                 {selectedIds.size > 0 && (
                     <button 
                         onClick={generatePDF}
-                        className="flex items-center bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded font-bold transition-all shadow-lg shadow-brand-500/30"
+                        className="flex-1 md:flex-none flex items-center bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded font-bold transition-all shadow-lg shadow-brand-500/30 whitespace-nowrap"
                     >
                         <FileDown className="w-4 h-4 mr-2" /> 
                         Scarica PDF ({selectedIds.size})
@@ -508,7 +507,7 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
                 
                 <button 
                     onClick={handleClearAll}
-                    className="flex items-center text-red-400 hover:text-red-300 px-3 py-2 rounded hover:bg-red-900/20 transition-colors"
+                    className="flex-1 md:flex-none flex items-center text-red-400 hover:text-red-300 px-3 py-2 rounded hover:bg-red-900/20 transition-colors whitespace-nowrap"
                 >
                     <Trash2 className="w-4 h-4 mr-2" /> Elimina Tutto
                 </button>
@@ -539,21 +538,21 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
                         <div key={sub.id} className={`bg-dark-800 rounded-lg border overflow-hidden shadow-lg transition-all ${isSelected ? 'border-brand-500 ring-1 ring-brand-500' : 'border-gray-700 hover:border-brand-500/50'}`}>
                             {/* Card Header */}
                             <div 
-                                className="p-6 flex flex-col md:flex-row justify-between items-center cursor-pointer hover:bg-dark-700/50"
+                                className="p-4 md:p-6 flex flex-col md:flex-row justify-between items-center cursor-pointer hover:bg-dark-700/50"
                                 onClick={() => toggleExpand(sub.id)}
                             >
-                                <div className="flex items-center w-full md:w-auto">
+                                <div className="flex items-center w-full md:w-auto mb-4 md:mb-0">
                                     {/* Checkbox */}
                                     <div onClick={(e) => toggleSelection(sub.id, e)} className="mr-4 cursor-pointer text-gray-400 hover:text-brand-500">
                                         {isSelected ? <CheckSquare className="w-6 h-6 text-brand-500" /> : <Square className="w-6 h-6" />}
                                     </div>
 
                                     <div className="flex items-center space-x-4">
-                                        <div className="w-12 h-12 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
+                                        <div className="w-12 h-12 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30 shrink-0">
                                             {sub.fullName.charAt(0)}
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-bold text-white">{sub.fullName}</h3>
+                                            <h3 className="text-lg md:text-xl font-bold text-white">{sub.fullName}</h3>
                                             <p className="text-gray-400 text-sm flex items-center">
                                                 <Calendar className="w-3 h-3 mr-1" /> 
                                                 {new Date(sub.submissionDate).toLocaleDateString()}
@@ -562,20 +561,20 @@ const AdminDashboard: React.FC<Props> = ({ onLogout }) => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center space-x-6 mt-4 md:mt-0 w-full md:w-auto justify-end">
-                                    <div className="text-right">
+                                <div className="flex items-center justify-between w-full md:w-auto md:space-x-6">
+                                    <div className="text-left md:text-right">
                                         <span className="block text-xs text-gray-500 uppercase">Obiettivo</span>
-                                        <span className="text-brand-400 font-medium">
+                                        <span className="text-brand-400 font-medium text-sm">
                                             {Object.entries(sub.goals).filter(([_, v]) => v).map(([k]) => k).slice(0, 2).join(', ') || 'Generico'}
                                         </span>
                                     </div>
-                                    {expandedId === sub.id ? <ChevronUp className="text-gray-400" /> : <ChevronDown className="text-gray-400" />}
+                                    {expandedId === sub.id ? <ChevronUp className="text-gray-400 ml-4" /> : <ChevronDown className="text-gray-400 ml-4" />}
                                 </div>
                             </div>
 
                             {/* Expanded Details */}
                             {expandedId === sub.id && (
-                                <div className="p-6 bg-dark-900/50 border-t border-gray-700">
+                                <div className="p-4 md:p-6 bg-dark-900/50 border-t border-gray-700">
                                     
                                     {/* Photos Grid */}
                                     {sub.photos.length > 0 && (
