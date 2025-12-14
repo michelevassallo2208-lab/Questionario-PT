@@ -1,82 +1,121 @@
-import { QuestionnaireData, CustomQuestion, User } from './types';
+import { QuestionnaireData, CustomQuestion, PinData } from './types';
 
-const STORAGE_KEY = 'davide_pt_submissions';
-const AUTH_KEY = 'davide_pt_auth'; // Stores boolean 'true'
-const USERS_KEY = 'davide_pt_users'; // Stores list of users
-const QUESTIONS_KEY = 'davide_pt_custom_questions';
+// CONFIGURAZIONE API VERCEL
+// Su Vercel le API sono servite automaticamente sotto /api
+const API_BASE_URL = '/api'; 
 
-// --- DATA MANAGEMENT ---
+const AUTH_KEY = 'davide_pt_auth_token';
 
-export const getSubmissions = (): QuestionnaireData[] => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error("Error reading submissions", e);
-    return [];
-  }
-};
-
-export const saveSubmission = (data: QuestionnaireData) => {
-  const current = getSubmissions();
-  const updated = [data, ...current];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-};
-
-export const clearSubmissions = () => {
-  localStorage.removeItem(STORAGE_KEY);
-};
-
-// --- AUTHENTICATION & USERS ---
-
-export const getUsers = (): User[] => {
+async function apiFetch(endpoint: string, options: RequestInit = {}) {
     try {
-        const u = localStorage.getItem(USERS_KEY);
-        return u ? JSON.parse(u) : [];
-    } catch {
+        // Rimuoviamo lo slash iniziale dall'endpoint se presente per unirlo correttamente
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+        
+        const response = await fetch(`${API_BASE_URL}/${cleanEndpoint}`, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            ...options,
+        });
+        
+        // Gestione errori HTTP
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error ${response.status}: ${errorText}`);
+        }
+        
+        // Se la risposta è vuota (es. dopo una DELETE), non fare parse JSON
+        const text = await response.text();
+        return text ? JSON.parse(text) : {};
+    } catch (error) {
+        console.error(`Errore chiamata ${endpoint}:`, error);
+        throw error;
+    }
+}
+
+// --- GESTIONE QUESTIONARI ---
+
+export const getSubmissions = async (): Promise<QuestionnaireData[]> => {
+    try {
+        const data = await apiFetch('submissions'); 
+        return Array.isArray(data) ? data : [];
+    } catch (e) {
+        console.error("Errore recupero schede", e);
         return [];
     }
 };
 
-export const saveUser = (username: string, pass: string) => {
-    const users = getUsers();
-    // Check if user exists
-    if (users.find(u => u.username === username)) {
-        throw new Error("Utente già esistente");
-    }
-    const newUser: User = { username, pass, role: 'admin' };
-    localStorage.setItem(USERS_KEY, JSON.stringify([...users, newUser]));
-};
-
-export const deleteUser = (username: string) => {
-    const users = getUsers();
-    const updated = users.filter(u => u.username !== username);
-    localStorage.setItem(USERS_KEY, JSON.stringify(updated));
-};
-
-export const login = (u: string, p: string): boolean => {
-    const users = getUsers();
-    
-    // Normalize inputs (trim spaces) to help mobile users
-    const cleanUser = u.trim();
-    const cleanPass = p.trim();
-
-    // BOOTSTRAP MODE: If no users exist, allow davide/davide
-    if (users.length === 0) {
-        if (cleanUser === 'davide' && cleanPass === 'davide') {
-            localStorage.setItem(AUTH_KEY, 'true');
-            return true;
-        }
+export const saveSubmission = async (data: QuestionnaireData): Promise<boolean> => {
+    try {
+        await apiFetch('submissions', { 
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        return true;
+    } catch (e) {
+        console.error("Errore salvataggio scheda", e);
+        alert("Errore di connessione al server.");
         return false;
     }
+};
 
-    // NORMAL MODE
-    const match = users.find(user => user.username === cleanUser && user.pass === cleanPass);
-    if (match) {
-        localStorage.setItem(AUTH_KEY, 'true');
-        return true;
+export const deleteSubmission = async (id: string): Promise<boolean> => {
+    try {
+         await apiFetch(`submissions?id=${id}`, { method: 'DELETE' }); 
+         return true;
+    } catch (e) {
+        alert("Errore eliminazione.");
+        return false;
     }
-    return false;
+};
+
+// --- AUTENTICAZIONE & PIN ---
+
+export const getPins = async (): Promise<PinData[]> => {
+    try {
+        return await apiFetch('pins'); 
+    } catch {
+        return []; 
+    }
+};
+
+export const verifyPin = async (inputPin: string): Promise<{ valid: boolean; mustChange: boolean }> => {
+    try {
+        const result = await apiFetch('login', { 
+            method: 'POST',
+            body: JSON.stringify({ pin: inputPin })
+        });
+
+        if (result.valid) {
+            if (!result.mustChange) {
+                localStorage.setItem(AUTH_KEY, 'true');
+            }
+            return { valid: true, mustChange: result.mustChange };
+        }
+        return { valid: false, mustChange: false };
+    } catch (e) {
+        console.error("Errore login", e);
+        return { valid: false, mustChange: false };
+    }
+};
+
+export const updatePin = async (oldCode: string, newCode: string) => {
+    await apiFetch('pins', { 
+        method: 'PUT',
+        body: JSON.stringify({ oldCode, newCode })
+    });
+    localStorage.setItem(AUTH_KEY, 'true');
+};
+
+export const addPin = async (code: string, label: string) => {
+    await apiFetch('pins', { 
+        method: 'POST',
+        body: JSON.stringify({ code, label })
+    });
+};
+
+export const deletePin = async (code: string) => {
+    await apiFetch(`pins?code=${code}`, { method: 'DELETE' });
 };
 
 export const logout = () => {
@@ -87,63 +126,23 @@ export const isAuthenticated = (): boolean => {
     return localStorage.getItem(AUTH_KEY) === 'true';
 };
 
-// --- CUSTOM QUESTIONS ---
+// --- DOMANDE PERSONALIZZATE ---
 
-export const getCustomQuestions = (): CustomQuestion[] => {
+export const getCustomQuestions = async (): Promise<CustomQuestion[]> => {
     try {
-        const q = localStorage.getItem(QUESTIONS_KEY);
-        return q ? JSON.parse(q) : [];
+        return await apiFetch('questions');
     } catch {
         return [];
     }
 };
 
-export const saveCustomQuestion = (q: CustomQuestion) => {
-    const current = getCustomQuestions();
-    localStorage.setItem(QUESTIONS_KEY, JSON.stringify([...current, q]));
-};
-
-export const deleteCustomQuestion = (id: string) => {
-    const current = getCustomQuestions();
-    const updated = current.filter(q => q.id !== id);
-    localStorage.setItem(QUESTIONS_KEY, JSON.stringify(updated));
-};
-
-// --- BACKUP & SECURITY ---
-
-export const exportDatabase = () => {
-    const db = {
-        submissions: getSubmissions(),
-        questions: getCustomQuestions(),
-        users: getUsers(),
-        timestamp: new Date().toISOString()
-    };
-    
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `DavidePT_Backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-};
-
-export const importDatabase = (file: File): Promise<boolean> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const json = JSON.parse(event.target?.result as string);
-                if (json.submissions) localStorage.setItem(STORAGE_KEY, JSON.stringify(json.submissions));
-                if (json.questions) localStorage.setItem(QUESTIONS_KEY, JSON.stringify(json.questions));
-                if (json.users) localStorage.setItem(USERS_KEY, JSON.stringify(json.users));
-                resolve(true);
-            } catch (e) {
-                console.error("Invalid backup file", e);
-                resolve(false);
-            }
-        };
-        reader.onerror = () => resolve(false);
-        reader.readAsText(file);
+export const saveCustomQuestion = async (q: CustomQuestion) => {
+    await apiFetch('questions', { 
+        method: 'POST',
+        body: JSON.stringify(q)
     });
+};
+
+export const deleteCustomQuestion = async (id: string) => {
+    await apiFetch(`questions?id=${id}`, { method: 'DELETE' });
 };

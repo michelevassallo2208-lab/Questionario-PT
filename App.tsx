@@ -3,8 +3,8 @@ import QuestionnaireForm from './components/QuestionnaireForm';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import { QuestionnaireData } from './types';
-import { Dumbbell, ShieldCheck, Instagram, Globe, ExternalLink } from 'lucide-react';
-import { getSubmissions, saveSubmission, isAuthenticated, logout } from './utils';
+import { Dumbbell, CheckCircle, Instagram, Globe, ExternalLink, Send, Loader2 } from 'lucide-react';
+import { saveSubmission, isAuthenticated, logout } from './utils';
 
 // Simple Router State
 type View = 'LANDING' | 'LOGIN' | 'DASHBOARD';
@@ -12,6 +12,7 @@ type View = 'LANDING' | 'LOGIN' | 'DASHBOARD';
 export default function App() {
   const [view, setView] = useState<View>('LANDING');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     // Check local storage for session (basic implementation)
@@ -20,10 +21,16 @@ export default function App() {
     }
   }, [view]);
 
-  const handleFormSubmit = (data: QuestionnaireData) => {
-    saveSubmission(data);
-    setShowSuccess(true);
-    window.scrollTo(0, 0);
+  const handleFormSubmit = async (data: QuestionnaireData) => {
+    setIsSaving(true);
+    // Send data to API
+    const success = await saveSubmission(data);
+    setIsSaving(false);
+    
+    if (success) {
+        setShowSuccess(true);
+        window.scrollTo(0, 0);
+    }
   };
 
   const renderContent = () => {
@@ -31,20 +38,33 @@ export default function App() {
       return (
         <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6 relative z-10">
           <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-[0_0_30px_rgba(34,197,94,0.5)]">
-            <ShieldCheck className="w-12 h-12 text-white" />
+            <CheckCircle className="w-12 h-12 text-white" />
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Questionario Ricevuto!</h2>
-          <p className="text-gray-300 text-lg md:text-xl max-w-lg mb-8 leading-relaxed">
-            Grazie per aver compilato il modulo. Analizzerò i tuoi dati e ti contatterò presto per iniziare il tuo percorso.
-          </p>
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">Inviato con successo!</h2>
+          <div className="bg-dark-800 p-6 rounded-xl border border-brand-500/30 max-w-lg mb-8 shadow-xl">
+             <p className="text-gray-300 leading-relaxed">
+                Il tuo questionario è stato salvato correttamente nel database di Davide.
+                <br />Verrai ricontattato presto.
+             </p>
+          </div>
+          
           <button 
             onClick={() => { setShowSuccess(false); window.location.reload(); }}
-            className="bg-brand-600 text-white font-bold py-4 px-10 rounded-full hover:bg-brand-500 transition shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+            className="text-gray-400 hover:text-white underline text-sm"
           >
             Torna alla Home
           </button>
         </div>
       );
+    }
+    
+    if (isSaving) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center z-20">
+                <Loader2 className="w-16 h-16 text-brand-500 animate-spin mb-4" />
+                <h2 className="text-2xl font-bold text-white">Salvataggio in corso...</h2>
+            </div>
+        )
     }
 
     switch (view) {
@@ -133,7 +153,7 @@ export default function App() {
                   onClick={() => setView('LOGIN')}
                   className="bg-white/5 hover:bg-white/10 text-white text-sm font-bold border border-white/10 px-4 py-2 rounded-lg transition-all"
                 >
-                  Login
+                  Area PT
                 </button>
               )}
             </div>
